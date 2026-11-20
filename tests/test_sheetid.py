@@ -17,6 +17,10 @@ def test_identify_sheet_recognises_common_codes(code):
     assert identify_sheet(title(code), CFG) == code
 
 
+def test_lowercase_code_is_not_a_sheet_code():
+    assert identify_sheet(page([word("a101", 500, 740, 24)]), CFG) is None
+
+
 def test_page_without_code_returns_none():
     p = page([word("NOTES", 500, 740, 24), word("1:100", 400, 700, 12)])
     assert identify_sheet(p, CFG) is None

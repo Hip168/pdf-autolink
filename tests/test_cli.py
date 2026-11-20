@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -71,9 +70,7 @@ def test_exit_zero_even_when_there_are_unmatched(tmp_path, capsys):
     src = _five_pdf(tmp_path)
     assert _run([str(src)]) == 0
     last = capsys.readouterr().out.strip().splitlines()[-1]
-    assert re.fullmatch(
-        r"pdf-autolink: 5 pages, 6 links added, 0 existing, \d+ unmatched, 0 ambiguous", last
-    )
+    assert last == ("pdf-autolink: 5 pages, 6 links added, 0 existing, 1 unmatched, 0 ambiguous")
 
 
 def test_second_run_reports_existing_links(tmp_path, capsys):
@@ -94,6 +91,15 @@ def test_explicit_output_and_report_paths(tmp_path):
     assert out.is_file()
     assert rep.is_file()
     assert not (tmp_path / "plans_linked.pdf").exists()
+
+
+def test_default_report_follows_output_name(tmp_path):
+    src = _clean_pdf(tmp_path)
+    out = tmp_path / "sub" / "out.pdf"
+    out.parent.mkdir()
+    assert _run([str(src), "-o", str(out)]) == 0
+    assert (tmp_path / "sub" / "out.csv").is_file()
+    assert not (tmp_path / "plans_linked.csv").exists()
 
 
 def test_input_file_is_never_modified(tmp_path):

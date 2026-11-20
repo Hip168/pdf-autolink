@@ -83,8 +83,17 @@ def test_each_unrecognized_page_gets_one_unmatched_row_with_note(tmp_path):
     flagged = [r for r in rows if r["note"] == "sheet id not recognized"]
     assert [r["source_page"] for r in flagged] == ["3", "5"]
     assert all(r["status"] == "unmatched" for r in flagged)
+    assert all(r["text"] == "" and r["kind"] == "sheet" for r in flagged)
+    assert all(r["note"] == "" for r in rows if r not in flagged)
     assert all(r["target_page"] == "" for r in flagged)
     assert len(rows) == 3
+
+
+def test_self_row_has_target_page_of_itself(tmp_path):
+    out = tmp_path / "r.csv"
+    write_report([_res("A101", 0, RefKind.SHEET, "A101", Status.SELF, 0)], _index(), out)
+    (row,) = _read(out)
+    assert row["target_page"] == "1"
 
 
 def test_no_unrecognized_pages_means_no_note_rows(tmp_path):

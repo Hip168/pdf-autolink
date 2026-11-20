@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pikepdf
 import pytest
-from pdf_autolink.annotate import add_links
 
+from pdf_autolink.annotate import add_links
 from pdf_autolink.config import Config
 from pdf_autolink.models import Reference, RefKind, Resolved, Status
 from tests.helpers.make_pdf import PageSpec, build, count_links, links
@@ -80,6 +80,13 @@ def test_rect_on_page_with_offset_cropbox(tmp_path):
 @pytest.mark.parametrize("status", [Status.UNMATCHED, Status.AMBIGUOUS])
 def test_unresolved_references_get_no_link(tmp_path, status):
     res = Resolved(_ref(), status, None)
+    with pikepdf.open(_make(tmp_path)) as pdf:
+        assert add_links(pdf, [res], _pages(), CFG) == (0, 0)
+        assert count_links(pdf) == 0
+
+
+def test_self_reference_gets_no_link(tmp_path):
+    res = Resolved(_ref(), Status.SELF, 0)
     with pikepdf.open(_make(tmp_path)) as pdf:
         assert add_links(pdf, [res], _pages(), CFG) == (0, 0)
         assert count_links(pdf) == 0

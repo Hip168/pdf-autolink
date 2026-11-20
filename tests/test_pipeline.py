@@ -222,6 +222,23 @@ def test_custom_text_source_is_used_instead_of_reading_pdf_text(tmp_path):
     assert rect[3] - rect[1] < 20
 
 
+def test_report_none_writes_no_csv(tmp_path):
+    src = build(_five_pages(), tmp_path / "plans.pdf")
+    out = tmp_path / "o.pdf"
+    autolink(src, out)
+    assert out.is_file()
+    assert list(tmp_path.glob("*.csv")) == []
+
+
+def test_self_reference_gets_no_link_in_pipeline(tmp_path):
+    src = build([PageSpec("A101", texts=[(100, 200, 10, "A101")])], tmp_path / "s.pdf")
+    result = autolink(src, tmp_path / "o.pdf", tmp_path / "o.csv")
+    assert [r.status for r in result.resolved] == [Status.SELF]
+    assert result.links_added == 0
+    with pikepdf.open(tmp_path / "o.pdf") as pdf:
+        assert count_links(pdf) == 0
+
+
 def test_missing_input_raises(tmp_path):
     with pytest.raises(PdfAutolinkError):
         autolink(tmp_path / "nope.pdf", tmp_path / "o.pdf")

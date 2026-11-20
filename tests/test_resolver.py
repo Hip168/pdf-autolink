@@ -27,6 +27,7 @@ def test_code_on_exactly_one_other_page_is_linked():
 def test_code_on_same_page_is_self():
     (r,) = resolve([_ref("A101", 0)], _index())
     assert r.status is Status.SELF
+    assert r.target_page == 0
 
 
 def test_code_on_two_pages_is_ambiguous_without_target():
