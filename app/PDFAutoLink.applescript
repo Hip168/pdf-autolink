@@ -1,7 +1,7 @@
 -- PDF AutoLink droplet: drop PDF files onto the app icon; each one is run
 -- through the `pdf-autolink` command-line tool.
 -- PDF_AUTOLINK_CLI      path to the CLI (checked first)
--- PDF_AUTOLINK_HEADLESS 1 = no dialogs/notifications; the result is returned
+-- PDF_AUTOLINK_HEADLESS 1 = no dialogs/notifications; `open` returns the result
 --                       (printed by osascript) and raised as an error on failure.
 
 property appTitle : "PDF AutoLink"
@@ -12,7 +12,7 @@ on run
 end run
 
 on open droppedItems
-	processFiles(droppedItems)
+	return processFiles(droppedItems)
 end open
 
 on isHeadless()
@@ -59,7 +59,7 @@ end fileName
 on processFiles(droppedItems)
 	set cli to findCli()
 	if cli is "" then
-		set msg to "Chưa cài pdf-autolink. Cài bằng lệnh:" & linefeed & installHint
+		set msg to "Lỗi: chưa cài pdf-autolink. Cài bằng lệnh:" & linefeed & installHint
 		if isHeadless() then error msg
 		display dialog msg buttons {"OK"} default button "OK" with title appTitle with icon stop
 		return msg
@@ -90,7 +90,7 @@ on processFiles(droppedItems)
 				set end of details to fileName(p) & ": " & lastLine(out)
 			on error errMsg
 				set errCount to errCount + 1
-				set end of details to fileName(p) & ": LỖI — " & lastLine(errMsg)
+				set end of details to fileName(p) & ": " & lastLine(errMsg)
 			end try
 		end if
 	end repeat
