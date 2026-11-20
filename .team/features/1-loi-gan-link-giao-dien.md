@@ -112,3 +112,9 @@ Helper test (TESTER sở hữu): `tests/helpers/make_pdf.py` — `PageSpec(code,
 5. **`autolink(report=None)`:** không ghi CSV (CLI luôn truyền đường dẫn).
 6. **Phân biệt hoa thường:** mã chỉ khớp chữ HOA (`sheet_regex` như hợp đồng, không cờ IGNORECASE) — `a101` không phải mã.
 7. **`PageSpec.texts`:** `(x, y, size, text)` theo toạ độ hiển thị, `y` = đường cơ sở tính từ mép trên, chữ nằm ngang (theo docstring của TESTER-1).
+
+## Chốt thêm 2 (BA, 2026-11-21 — ghi lại tham số DEV-1 đã chọn, TEST-LEAD đề nghị)
+- **Khoảng cách dọc của bong bóng 2 dòng** = khe hở giữa hai hộp chữ: `y0(từ dưới) − y1(từ trên)` ≤ `stack_max_gap_factor × size`, với `size = max(cỡ hai từ)`.
+- **Lệch ngang 2 dòng:** chồng ngang, hoặc |tâm x lệch| ≤ 2 × size. Nhiều ứng viên → mã gần nhất phía dưới.
+- **Bong bóng 1 dòng ghép nhiều từ:** tối đa 3 từ liền kề; liền kề = cùng dòng (tâm dọc lệch ≤ nửa chiều cao) và khe ngang ≤ cỡ chữ của từ trước.
+- **Thứ tự kết quả `find_references`:** sắp theo `(y0, x0)`.
