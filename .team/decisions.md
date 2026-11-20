@@ -20,3 +20,4 @@ Còn lại theo `~/.claude/team/CONVENTIONS.md`.
 - **D5 Idempotent bằng so trùng Rect (IoU ≥ 0.9) + cùng trang đích**, không dùng dấu /NM: coi cả link có sẵn của file gốc là "đã có" (chấp nhận).
 - **D6 `A-501` ≠ `A501`**, không gộp biến thể mã (để sau nếu cần).
 - **D7 CI** ma trận ubuntu + macos, Python 3.11/3.12 (repo public → phút miễn phí); job macOS cần cho đề mục 2.
+- **D8** Thứ tự merge 1 → 2: nhánh 2 không có pyproject nên CI chỉ chạy test macOS sau khi cập nhật theo main có đề mục 1. Hợp đồng headless của app: `features/2-app-keo-tha.md` mục "Chốt thêm".
