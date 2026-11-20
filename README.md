@@ -19,7 +19,7 @@ A CSV report lists every link created and every reference that could not be matc
 ## Planned interface
 
 - Command-line tool (`pdf-autolink input.pdf -o output.pdf`)
-- macOS drag-and-drop app (wrapper around the CLI)
+- macOS drag-and-drop app (wrapper around the CLI) — see [docs/app-macos.md](docs/app-macos.md)
 - Optional OCR for scanned sets (via `ocrmypdf`) — later
 
 ## Tech
