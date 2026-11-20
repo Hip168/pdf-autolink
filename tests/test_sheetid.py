@@ -40,10 +40,10 @@ def test_only_code_outside_title_block_gives_none():
 
 
 def test_word_centre_decides_membership_of_region():
-    # tâm nằm trong vùng dù x0 nằm ngoài (x0=330 < 336.6, rộng 58 -> tâm 359)
+    # tâm nằm trong vùng dù x0 nằm ngoài (x0=330 < 336.6, rộng 52.8 -> tâm 356.4)
     inside = page([word("A101", 330, 740, 24)])
     assert identify_sheet(inside, CFG) == "A101"
-    # x1 nằm trong vùng nhưng tâm ở ngoài (x0=300 -> tâm 329 < 336.6)
+    # x1 nằm trong vùng nhưng tâm ở ngoài (x0=300 -> tâm 326.4 < 336.6)
     outside = page([word("A101", 300, 740, 24)])
     assert identify_sheet(outside, CFG) is None
 

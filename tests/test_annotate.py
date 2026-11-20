@@ -41,7 +41,7 @@ def test_link_structure_matches_contract(tmp_path):
         assert len(annots) == 1
         a = annots[0]
         assert str(a["/Subtype"]) == "/Link"
-        assert str(a.get("/Type", "/Annot")) == "/Annot"
+        assert str(a["/Type"]) == "/Annot"
         assert [float(v) for v in a["/Border"]] == [0, 0, 0]
         assert str(a["/A"]["/S"]) == "/GoTo"
         dest = a["/A"]["/D"]
@@ -171,12 +171,21 @@ def test_same_call_twice_in_memory_does_not_duplicate(tmp_path):
 
 
 def test_slightly_shifted_existing_link_counts_as_duplicate(tmp_path):
-    shifted = (101.0, 200.5, 151.0, 210.5)  # IoU > 0.9 với hộp gốc
+    shifted = (101.0, 200.0, 151.0, 210.0)  # IoU = 490/510 = 0.961 >= 0.9
     with pikepdf.open(_make(tmp_path)) as pdf:
         add_links(pdf, [_linked(1, rect=shifted)], _pages(), CFG)
         added, skipped = add_links(pdf, [_linked(1)], _pages(), CFG)
         assert (added, skipped) == (0, 1)
         assert count_links(pdf) == 1
+
+
+def test_shifted_link_below_iou_threshold_is_added_as_new(tmp_path):
+    shifted = (101.0, 200.5, 151.0, 210.5)  # IoU = 0.871 < 0.9
+    with pikepdf.open(_make(tmp_path)) as pdf:
+        add_links(pdf, [_linked(1, rect=shifted)], _pages(), CFG)
+        added, skipped = add_links(pdf, [_linked(1)], _pages(), CFG)
+        assert (added, skipped) == (1, 0)
+        assert count_links(pdf) == 2
 
 
 def test_same_rect_but_different_target_is_not_duplicate(tmp_path):

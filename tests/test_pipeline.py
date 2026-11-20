@@ -274,3 +274,32 @@ def test_output_equal_to_input_raises_and_leaves_input_intact(tmp_path):
     with pytest.raises(PdfAutolinkError):
         autolink(src, src, tmp_path / "o.csv")
     assert src.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    ("rotate", "crop", "point", "w_range", "h_range"),
+    [
+        # hộp hiển thị ~ (100,192)-(123,202); điểm kỳ vọng tính tay trong user space
+        (180, None, (500, 197), (18, 28), (6, 14)),
+        (270, None, (415, 680), (6, 14), (18, 28)),
+        (0, (20, 30, 500, 700), (130, 503), (18, 28), (6, 14)),
+        (90, (20, 30, 500, 700), (217, 140), (6, 14), (18, 28)),
+    ],
+)
+def test_e2e_link_position_for_rotate_180_270_and_offset_cropbox(
+    tmp_path, rotate, crop, point, w_range, h_range
+):
+    specs = [
+        PageSpec("A101", texts=[(100, 200, 10, "A102")], rotate=rotate, cropbox=crop),
+        PageSpec("A102"),
+    ]
+    src = build(specs, tmp_path / "p.pdf")
+    out = tmp_path / "o.pdf"
+    result = autolink(src, out, tmp_path / "o.csv")
+    assert result.links_added == 1
+    with pikepdf.open(out) as pdf:
+        ((rect, target, _),) = links(pdf, 0)
+    assert target == 1
+    assert _covers(rect, point, pad=1.0)
+    assert w_range[0] <= rect[2] - rect[0] <= w_range[1]
+    assert h_range[0] <= rect[3] - rect[1] <= h_range[1]

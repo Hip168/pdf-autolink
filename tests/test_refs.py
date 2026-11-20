@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pdf_autolink.refs import find_references
-
 from pdf_autolink.config import Config
 from pdf_autolink.models import Reference, RefKind
+from pdf_autolink.refs import find_references
 from tests.helpers.pagetext import page, word
 
 CFG = Config()
@@ -136,8 +135,9 @@ def test_two_lines_horizontally_far_apart_is_not_detail():
 
 
 def test_two_lines_offset_centres_within_two_font_sizes_is_detail():
-    # tâm "3" ~ 302.75, tâm "A501" ~ 316.1 (lệch ~13 <= 2*10), không chồng ngang
-    ws = [word("3", 300, 400), word("A501", 305, 412)]
+    # "3" x 300..305.5 (tâm 302.75); "A501" x 307..329 (tâm 318): không chồng ngang,
+    # lệch tâm ~15.3 <= 2*10
+    ws = [word("3", 300, 400), word("A501", 307, 412)]
     refs = find_references(page(ws), None, CFG)
     assert [r.kind for r in refs] == [RefKind.DETAIL]
 
