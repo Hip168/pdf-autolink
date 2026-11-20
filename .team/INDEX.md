@@ -12,3 +12,7 @@
 | .team/tests/X.md | Sổ test của đề mục X | TESTER-X, TEST-LEAD-X, người dùng |
 | .team/features/X-*-giao-dien.md | Chữ ký công khai (tên class/hàm/Key/ARB/đường dẫn file) — hợp đồng giữa DEV và TESTER | DEV-X, TESTER-X, TEST-LEAD-X |
 | .team/conflicts/X.md | Chỗ DEV làm khác nhau | Người dùng, BA |
+| .team/autonomy.md | Chế độ tự động + luật riêng dự án | Điều phối |
+| .team/features/1-loi-gan-link.md | Đề mục 1: kiến trúc, thuật toán, task + tiêu chí | DEV-1, TESTER-1, TEST-LEAD |
+| .team/features/1-loi-gan-link-giao-dien.md | Hợp đồng chữ ký module + CLI | DEV-1, TESTER-1, DEV-2, TESTER-2, TEST-LEAD |
+| .team/features/2-app-keo-tha.md | Đề mục 2: droplet AppleScript, task + tiêu chí | DEV-2, TESTER-2, TEST-LEAD |

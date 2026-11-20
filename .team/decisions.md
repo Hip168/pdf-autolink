@@ -12,3 +12,11 @@ Còn lại theo `~/.claude/team/CONVENTIONS.md`.
 ## Quyết định kiến trúc
 
 (BA sẽ điền)
+
+- **D1 (2026-11-21) BA tự duyệt bản nháp issue** theo Luật riêng (1) — người dùng giao toàn quyền, không hỏi.
+- **D2 Chia 2 đề mục độc lập:** 1 lõi CLI; 2 app kéo-thả. Hợp đồng chung duy nhất = giao diện CLI trong `features/1-loi-gan-link-giao-dien.md`; đề mục 2 test bằng CLI giả → chạy song song, merge thứ tự nào cũng được.
+- **D3 Đề mục 1 chọn kiến trúc "sạch"** (logic thuần tách I/O, `TextSource` Protocol) thay vì "tối thiểu": lý do — OCR là mở rộng đã biết trước (brief), logic thuần test được không cần PDF; chi phí thêm ~4 file nhỏ. Lấy từ bản tối thiểu: mã thoát rõ ràng, cảnh báo toạ độ xoay/CropBox là rủi ro số 1.
+- **D4 Đề mục 2 chọn AppleScript droplet** (nguồn text, `osacompile` dựng lại được, test được trên CI macOS) thay vì Automator (bundle khó diff) / Shortcuts (không kéo-thả vào biểu tượng, không dựng từ nguồn).
+- **D5 Idempotent bằng so trùng Rect (IoU ≥ 0.9) + cùng trang đích**, không dùng dấu /NM: coi cả link có sẵn của file gốc là "đã có" (chấp nhận).
+- **D6 `A-501` ≠ `A501`**, không gộp biến thể mã (để sau nếu cần).
+- **D7 CI** ma trận ubuntu + macos, Python 3.11/3.12 (repo public → phút miễn phí); job macOS cần cho đề mục 2.
