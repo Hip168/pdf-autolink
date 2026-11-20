@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import plistlib
+import pwd
 import subprocess
 import sys
 import unicodedata
@@ -17,9 +19,11 @@ BUILD = ROOT / "scripts" / "build-app.sh"
 SUMMARY = "pdf-autolink: 3 pages, 5 links added, 0 existing, 1 unmatched, 0 ambiguous"
 TIMEOUT = 120
 
-# Giả định (không có trong hợp đồng, chờ BA/DEV xác nhận): chế độ headless được
-# gọi bằng cách nạp main.scpt và gọi handler `open`; kết quả là giá trị trả về
-# (osascript in ra stdout), lỗi là `error` (osascript thoát != 0, stderr).
+# Nguồn: .team/features/2-app-keo-tha.md, mục "Chốt thêm" (BA, 2026-11-21).
+# Gọi headless: nạp main.scpt bằng `load script`, rồi `tell s to open {POSIX file ...}`.
+# `open` trả chuỗi (osascript in ra stdout): dòng 1 = "<ok> file xong, <lỗi> lỗi,
+# <bỏ qua> bỏ qua", các dòng sau = "<tên file>: <dòng cuối output CLI>". Có lỗi =>
+# `error` với chuỗi đó (osascript thoát != 0, stderr bắt đầu "execution error: ").
 DRIVER = [
     "-e",
     "on run argv",
@@ -70,7 +74,7 @@ def nfc(s: str) -> str:
 def run_app(app: Path, files: list[Path], env_extra: dict[str, str]):
     env = {
         "PATH": "/usr/bin:/bin",
-        "HOME": env_extra.pop("HOME", str(app.parent)),
+        "HOME": str(app.parent),
         "PDF_AUTOLINK_HEADLESS": "1",
         **env_extra,
     }
@@ -103,8 +107,8 @@ def test_build_tao_app_dung_cau_truc(app: Path) -> None:
 
 
 def test_build_chay_lai_xoa_ban_cu(tmp_path: Path) -> None:
-    for _ in range(2):
-        r = subprocess.run(
+    def build() -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
             ["bash", str(BUILD), str(tmp_path)],
             check=False,
             capture_output=True,
@@ -112,9 +116,16 @@ def test_build_chay_lai_xoa_ban_cu(tmp_path: Path) -> None:
             timeout=TIMEOUT,
             cwd=ROOT,
         )
-        assert r.returncode == 0, r.stderr
+
+    first = build()
+    assert first.returncode == 0, first.stderr
+    marker = tmp_path / "PDF AutoLink.app" / "Contents" / "ban-cu.txt"
+    marker.write_text("cu")
+    second = build()
+    assert second.returncode == 0, second.stderr
+    assert not marker.exists()
     assert (tmp_path / "PDF AutoLink.app/Contents/Info.plist").is_file()
-    assert str(tmp_path / "PDF AutoLink.app") in r.stdout
+    assert str(tmp_path / "PDF AutoLink.app") in second.stdout
 
 
 def test_pdf_ten_dac_biet_den_cli_dung_duong_dan(app: Path, tmp_path: Path) -> None:
@@ -127,8 +138,9 @@ def test_pdf_ten_dac_biet_den_cli_dung_duong_dan(app: Path, tmp_path: Path) -> N
     assert r.returncode == 0, r.stderr
     got = log.read_text(encoding="utf-8").splitlines()
     assert [nfc(x) for x in got] == [nfc(str(pdf))]
-    assert "1 file xong, 0 lỗi, 0 bỏ qua" in nfc(r.stdout)
-    assert SUMMARY in r.stdout
+    lines = nfc(r.stdout).splitlines()
+    assert lines[0] == "1 file xong, 0 lỗi, 0 bỏ qua"
+    assert lines[1:] == [nfc(f"{pdf.name}: {SUMMARY}")]
 
 
 def test_nhieu_file_va_duoi_pdf_hoa_thuong(app: Path, tmp_path: Path) -> None:
@@ -139,7 +151,9 @@ def test_nhieu_file_va_duoi_pdf_hoa_thuong(app: Path, tmp_path: Path) -> None:
     r = run_app(app, [a, b], {"PDF_AUTOLINK_CLI": str(cli)})
     assert r.returncode == 0, r.stderr
     assert sorted(log.read_text().splitlines()) == sorted([str(a), str(b)])
-    assert "2 file xong, 0 lỗi, 0 bỏ qua" in r.stdout
+    lines = r.stdout.splitlines()
+    assert lines[0] == "2 file xong, 0 lỗi, 0 bỏ qua"
+    assert sorted(lines[1:]) == [f"a.PDF: {SUMMARY}", f"b.Pdf: {SUMMARY}"]
 
 
 def test_file_txt_bi_bo_qua_cli_khong_duoc_goi(app: Path, tmp_path: Path) -> None:
@@ -149,7 +163,8 @@ def test_file_txt_bi_bo_qua_cli_khong_duoc_goi(app: Path, tmp_path: Path) -> Non
     r = run_app(app, [txt], {"PDF_AUTOLINK_CLI": str(cli)})
     assert r.returncode == 0, r.stderr
     assert not log.exists()
-    assert "0 file xong, 0 lỗi, 1 bỏ qua" in r.stdout
+    assert r.stdout.splitlines()[0] == "0 file xong, 0 lỗi, 1 bỏ qua"
+    assert "ghi chu.txt" not in r.stdout
 
 
 def test_hon_hop_pdf_va_txt_dem_dung(app: Path, tmp_path: Path) -> None:
@@ -160,7 +175,10 @@ def test_hon_hop_pdf_va_txt_dem_dung(app: Path, tmp_path: Path) -> None:
     r = run_app(app, [pdf, txt], {"PDF_AUTOLINK_CLI": str(cli)})
     assert r.returncode == 0, r.stderr
     assert log.read_text().splitlines() == [str(pdf)]
-    assert "1 file xong, 0 lỗi, 1 bỏ qua" in r.stdout
+    lines = r.stdout.splitlines()
+    assert lines[0] == "1 file xong, 0 lỗi, 1 bỏ qua"
+    assert lines[1:] == [f"ok.pdf: {SUMMARY}"]
+    assert "x.docx" not in r.stdout
 
 
 def test_cli_thoat_khac_0_bao_loi_kem_ten_file(app: Path, tmp_path: Path) -> None:
@@ -169,10 +187,8 @@ def test_cli_thoat_khac_0_bao_loi_kem_ten_file(app: Path, tmp_path: Path) -> Non
     cli, log = make_cli(tmp_path, 'echo "loi: khong doc duoc"; exit 1')
     r = run_app(app, [pdf], {"PDF_AUTOLINK_CLI": str(cli)})
     assert r.returncode != 0
-    out = r.stdout + r.stderr
-    assert "hong nang.pdf" in out
-    assert "loi: khong doc duoc" in out
-    assert "0 file xong, 1 lỗi, 0 bỏ qua" in out
+    assert "execution error: 0 file xong, 1 lỗi, 0 bỏ qua\n" in r.stderr
+    assert "hong nang.pdf: loi: khong doc duoc" in r.stderr
     assert log.read_text().splitlines() == [str(pdf)]
 
 
@@ -186,12 +202,37 @@ def test_mot_file_loi_mot_file_ok_van_xu_ly_ca_hai(app: Path, tmp_path: Path) ->
     r = run_app(app, [bad, good], {"PDF_AUTOLINK_CLI": str(cli)})
     assert r.returncode != 0
     assert sorted(log.read_text().splitlines()) == sorted([str(good), str(bad)])
-    out = r.stdout + r.stderr
-    assert "1 file xong, 1 lỗi, 0 bỏ qua" in out
-    assert "bad.pdf" in out
+    assert "execution error: 1 file xong, 1 lỗi, 0 bỏ qua\n" in r.stderr
+    assert "bad.pdf: oops" in r.stderr
+    assert f"good.pdf: {SUMMARY}" in r.stderr
+
+
+def _cli_that_tren_may() -> str | None:
+    """Trả về đường dẫn pdf-autolink thật nếu app có thể dò ra (khi đó test bị skip)."""
+    real_home = pwd.getpwuid(os.getuid()).pw_dir
+    for c in (
+        Path(real_home) / ".local/bin/pdf-autolink",
+        Path("/opt/homebrew/bin/pdf-autolink"),
+        Path("/usr/local/bin/pdf-autolink"),
+    ):
+        if c.exists():
+            return str(c)
+    r = subprocess.run(
+        ["/bin/zsh", "-lc", "command -v pdf-autolink"],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT,
+    )
+    return r.stdout.strip() or None
 
 
 def test_cli_khong_ton_tai_bao_chua_cai(app: Path, tmp_path: Path) -> None:
+    # HOME giả không chặn được `zsh -lc` (đọc profile của người dùng thật) nên skip
+    # khi máy đã cài pdf-autolink ở bất kỳ nơi nào findCli dò.
+    found = _cli_that_tren_may()
+    if found:
+        pytest.skip(f"máy đã có pdf-autolink ({found}); không dựng được ca 'chưa cài'")
     pdf = tmp_path / "a.pdf"
     pdf.write_bytes(b"%PDF-1.4\n")
     home = tmp_path / "home-trong"
@@ -202,5 +243,11 @@ def test_cli_khong_ton_tai_bao_chua_cai(app: Path, tmp_path: Path) -> None:
         {"PDF_AUTOLINK_CLI": str(tmp_path / "khong-co"), "PATH": "", "HOME": str(home)},
     )
     assert r.returncode != 0
-    assert "chưa cài" in r.stdout + r.stderr
-    assert "pdf-autolink" in r.stdout + r.stderr
+    assert "chưa cài pdf-autolink" in r.stderr
+
+
+def test_tai_lieu_app_macos_ton_tai_va_readme_tro_toi() -> None:
+    doc = ROOT / "docs" / "app-macos.md"
+    assert doc.is_file()
+    assert doc.read_text(encoding="utf-8").strip()
+    assert "docs/app-macos.md" in (ROOT / "README.md").read_text(encoding="utf-8")
