@@ -207,7 +207,7 @@ def test_mot_file_loi_mot_file_ok_van_xu_ly_ca_hai(app: Path, tmp_path: Path) ->
     assert f"good.pdf: {SUMMARY}" in r.stderr
 
 
-def _cli_that_tren_may() -> str | None:
+def _cli_that_tren_may(home: Path) -> str | None:
     """Trả về đường dẫn pdf-autolink thật nếu app có thể dò ra (khi đó test bị skip)."""
     real_home = pwd.getpwuid(os.getuid()).pw_dir
     for c in (
@@ -223,20 +223,21 @@ def _cli_that_tren_may() -> str | None:
         capture_output=True,
         text=True,
         timeout=TIMEOUT,
+        env={"PATH": "", "HOME": str(home)},
     )
     return r.stdout.strip() or None
 
 
 def test_cli_khong_ton_tai_bao_chua_cai(app: Path, tmp_path: Path) -> None:
-    # HOME giả không chặn được `zsh -lc` (đọc profile của người dùng thật) nên skip
-    # khi máy đã cài pdf-autolink ở bất kỳ nơi nào findCli dò.
-    found = _cli_that_tren_may()
+    # Dò đúng như app thấy: zsh -lc chạy với PATH rỗng + HOME giả (không dính PATH của
+    # pytest/.venv). Ba nơi file cố định thì kiểm ở máy thật; có thì skip.
+    home = tmp_path / "home-trong"
+    home.mkdir()
+    found = _cli_that_tren_may(home)
     if found:
         pytest.skip(f"máy đã có pdf-autolink ({found}); không dựng được ca 'chưa cài'")
     pdf = tmp_path / "a.pdf"
     pdf.write_bytes(b"%PDF-1.4\n")
-    home = tmp_path / "home-trong"
-    home.mkdir()
     r = run_app(
         app,
         [pdf],
@@ -249,5 +250,7 @@ def test_cli_khong_ton_tai_bao_chua_cai(app: Path, tmp_path: Path) -> None:
 def test_tai_lieu_app_macos_ton_tai_va_readme_tro_toi() -> None:
     doc = ROOT / "docs" / "app-macos.md"
     assert doc.is_file()
-    assert doc.read_text(encoding="utf-8").strip()
+    text = doc.read_text(encoding="utf-8").lower()
+    for muc in ("install", "build", "drag", "gatekeeper", "overwrit"):
+        assert muc in text, muc
     assert "docs/app-macos.md" in (ROOT / "README.md").read_text(encoding="utf-8")
