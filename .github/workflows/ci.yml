@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  locks:
+    name: Kiểm file khoá
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify locked files
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(.team/locks/*.sha256)
+          if [ ${#files[@]} -gt 0 ]; then sha256sum -c --quiet "${files[@]}"; fi
+          if [ -f .team/locks/dirs.txt ]; then
+            while IFS= read -r d; do
+              [ -z "$d" ] && continue
+              find "$d" -type f | while IFS= read -r f; do
+                grep -qF "  $f" "${files[@]}" || { echo "File lạ trong thư mục khoá: $f"; exit 1; }
+              done || exit 1
+            done < .team/locks/dirs.txt
+          fi
+
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Python project
+        id: detect
+        shell: bash
+        run: |
+          if [ -f pyproject.toml ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "Chưa có pyproject.toml — bỏ qua các bước Python."
+          fi
+
+      - uses: astral-sh/setup-uv@v5
+        if: steps.detect.outputs.has == 'true'
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        if: steps.detect.outputs.has == 'true'
+        run: uv python install ${{ matrix.python }}
+
+      - name: Sync dependencies
+        if: steps.detect.outputs.has == 'true'
+        run: uv sync --group dev --python ${{ matrix.python }}
+
+      - name: Lint
+        if: steps.detect.outputs.has == 'true'
+        run: uv run ruff check .
+
+      - name: Test
+        if: steps.detect.outputs.has == 'true'
+        run: uv run pytest -q
