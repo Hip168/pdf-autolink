@@ -32,3 +32,8 @@ line-length = 100
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
+
+[tool.ruff.lint.per-file-ignores]
+# D11: import order in these locked test files predates cli.py/report.py; files cannot be edited.
+"tests/test_cli.py" = ["I001"]
+"tests/test_report.py" = ["I001"]
