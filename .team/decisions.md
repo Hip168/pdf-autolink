@@ -22,3 +22,4 @@ Còn lại theo `~/.claude/team/CONVENTIONS.md`.
 - **D7 CI** ma trận ubuntu + macos, Python 3.11/3.12 (repo public → phút miễn phí); job macOS cần cho đề mục 2.
 - **D8** Thứ tự merge 1 → 2: nhánh 2 không có pyproject nên CI chỉ chạy test macOS sau khi cập nhật theo main có đề mục 1. Hợp đồng headless của app: `features/2-app-keo-tha.md` mục "Chốt thêm".
 - **D9** `pyproject.toml` có `[tool.pytest.ini_options] pythonpath = ["src", "."]`: trên macOS thư mục `.worktrees` (dấu chấm) làm file `.pth` của editable install bị cờ hidden và Python 3.12 bỏ qua → `uv run pytest` không import được gói.
+- **D10** Review đề mục 1 có 4 phát hiện (report đè input/output, lỗi I/O thành traceback + tự tạo thư mục ra, quyền file 0600, bộ nhớ theo trang) → điều phối tự quyết **sửa ngay** (Luật riêng 1); test bổ sung ở file test mới, không sửa test đã khoá.
