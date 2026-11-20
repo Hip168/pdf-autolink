@@ -103,3 +103,12 @@ def main(argv: Sequence[str] | None = None) -> int
 ```
 
 Helper test (TESTER sở hữu): `tests/helpers/make_pdf.py` — `PageSpec(code, texts=[(x, y, size, str)], rotate=0, cropbox=None, size=(w, h))`, `build(pages, path)`; mã trang vẽ ở góc dưới phải cỡ 24, chữ khác cỡ 8–10; `/Rotate`, `/CropBox` đặt bằng pikepdf sau khi sinh. Vị trí kỳ vọng trong test tính bằng hằng số, **không** gọi `geometry`.
+
+## Chốt thêm (BA, 2026-11-21 — trả lời giả định của TESTER-1)
+1. **`self`:** không tạo link; `Resolved.target_page` = trang của mã đó (chính trang nguồn).
+2. **Dòng tóm tắt CLI:** `<unmatched>` = số Resolved có `status == unmatched` (KHÔNG tính trang không nhận mã); `<ambiguous>` tương tự.
+3. **`--report` mặc định:** `OUTPUT` đổi đuôi `.csv`, cùng thư mục với OUTPUT (vd `-o /x/out.pdf` → `/x/out.csv`; không có `-o` → `<stem>_linked.csv` cạnh input).
+4. **CSV:** dòng "trang không nhận mã" có `text=""`, `kind="sheet"`, `target_page=""`, `status="unmatched"`, `note="sheet id not recognized"`; các dòng còn lại `note=""`.
+5. **`autolink(report=None)`:** không ghi CSV (CLI luôn truyền đường dẫn).
+6. **Phân biệt hoa thường:** mã chỉ khớp chữ HOA (`sheet_regex` như hợp đồng, không cờ IGNORECASE) — `a101` không phải mã.
+7. **`PageSpec.texts`:** `(x, y, size, text)` theo toạ độ hiển thị, `y` = đường cơ sở tính từ mép trên, chữ nằm ngang (theo docstring của TESTER-1).
