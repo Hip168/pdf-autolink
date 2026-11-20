@@ -23,7 +23,7 @@ def _existing_goto(page: pikepdf.Page) -> list[tuple[Rect, tuple[int, int]]]:
     """(rect, objgen of target page) for each /Link GoTo already on the page."""
     out = []
     for annot in page.obj.get("/Annots") or []:
-        if annot.get("/Subtype") != pikepdf.Name.Link:
+        if not isinstance(annot, pikepdf.Dictionary) or annot.get("/Subtype") != pikepdf.Name.Link:
             continue
         action = annot.get("/A")
         if action is None or action.get("/S") != pikepdf.Name.GoTo:

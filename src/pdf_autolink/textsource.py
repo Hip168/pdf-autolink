@@ -63,4 +63,5 @@ class PdfplumberSource:
                     )
                     for w in page.extract_words(extra_attrs=["size"])
                 ]
+                page.close()  # free pdfminer layout cache; memory stays flat on big sets
                 yield PageText(index=i, width=width, height=height, words=words)
