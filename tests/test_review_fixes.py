@@ -1,4 +1,7 @@
-"""[1-3] Hành vi thêm sau review (D10): kiểm tra đường dẫn, ghi file an toàn, quyền, close, /Annots lạ."""
+"""[1-3] Hành vi thêm sau review (D10).
+
+Kiểm tra đường dẫn, ghi file an toàn, quyền, close, /Annots lạ.
+"""
 
 from __future__ import annotations
 
@@ -184,7 +187,8 @@ def test_text_source_closes_every_page(tmp_path, monkeypatch):
 
     monkeypatch.setattr(pdfplumber.page.Page, "close", spy)
     gen = PdfplumberSource(pdf).pages()
-    # Khi nguồn trả trang i thì trang i đã được close (tài liệu còn mở, chưa đóng hàng loạt).
+    # Khi nguồn trả trang i thì trang i đã được close
+    # (tài liệu còn mở, chưa đóng hàng loạt).
     for expected in (1, 2, 3):
         got = next(gen)
         assert got.index == expected - 1
