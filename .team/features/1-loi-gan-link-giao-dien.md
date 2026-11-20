@@ -118,3 +118,14 @@ Helper test (TESTER sở hữu): `tests/helpers/make_pdf.py` — `PageSpec(code,
 - **Lệch ngang 2 dòng:** chồng ngang, hoặc |tâm x lệch| ≤ 2 × size. Nhiều ứng viên → mã gần nhất phía dưới.
 - **Bong bóng 1 dòng ghép nhiều từ:** tối đa 3 từ liền kề; liền kề = cùng dòng (tâm dọc lệch ≤ nửa chiều cao) và khe ngang ≤ cỡ chữ của từ trước.
 - **Thứ tự kết quả `find_references`:** sắp theo `(y0, x0)`.
+
+## Chốt thêm 3 (BA, 2026-11-21 — hành vi sau review, D10)
+- `report` (không None) trùng input hoặc output sau `Path.resolve()` → `PdfAutolinkError("report must be different from input and output")`, kiểm **trước** khi mở PDF hay ghi gì.
+- Thư mục cha của OUTPUT và REPORT tự tạo nếu chưa có.
+- `OSError` khi tạo thư mục / file tạm / lưu / chmod / đổi tên → `PdfAutolinkError` có chứa `"cannot write output"`; không để lại file tạm.
+- `OSError` khi ghi CSV → `PdfAutolinkError` có chứa `"cannot write report"`. Lúc đó PDF ra **đã ghi xong và giữ nguyên**, CLI vẫn thoát 1 (chấp nhận).
+- Lỗi pdfminer khi đọc chữ (`pdfminer.psparser.PSException` và lớp con) → `PdfAutolinkError` có chứa `"cannot read text from PDF"`. Lỗi loại khác của pdfplumber chưa bọc (ghi nhận, để sau).
+- CLI in lỗi ra stderr với tiền tố `"pdf-autolink: error: "`, thoát 1.
+- Quyền file PDF ra = `0o666 & ~umask`.
+- `PdfplumberSource.pages()` gọi `close()` cho mỗi trang ngay sau khi tạo `PageText`, trước khi trả trang đó.
+- Phần tử `/Annots` không phải dictionary (null, số, tên…) được giữ nguyên, bỏ qua khi dò link đã có; vẫn thêm link mới bình thường.
