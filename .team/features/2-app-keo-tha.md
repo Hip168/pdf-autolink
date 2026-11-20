@@ -28,3 +28,10 @@ Chỉ dựa vào hợp đồng CLI ở `1-loi-gan-link-giao-dien.md` (`pdf-autol
 - [ ] Test chỉ chạy trên macOS (`skipif sys.platform != "darwin"`), mỗi subprocess có timeout.
 ### [2-2] Tài liệu
 - [ ] `docs/app-macos.md` đủ các mục trên; README thêm một dòng trỏ tới.
+
+## Chốt thêm (BA, 2026-11-21 — trả lời CẦN BA của TESTER-2)
+- **Cách gọi headless (hợp đồng test):** `PDF_AUTOLINK_HEADLESS=1 osascript -e 'set s to load script POSIX file "<app>/Contents/Resources/Scripts/main.scpt"' -e 'tell s to open {POSIX file "<pdf1>", POSIX file "<pdf2>"}'` — tức gọi handler `on open` của script đã biên dịch.
+- **Kết quả headless:** handler `open` **trả về** chuỗi (osascript in ra stdout): dòng 1 = `"<ok> file xong, <lỗi> lỗi, <bỏ qua> bỏ qua"`; mỗi dòng sau = `"<tên file>: <dòng cuối output của CLI>"` cho từng file đã chạy (thành công hay lỗi).
+- **Có ≥ 1 lỗi ở headless:** `error` với đúng chuỗi trên (osascript thoát ≠ 0, chuỗi ở stderr).
+- **Không tìm thấy CLI:** thông báo chứa nguyên văn `chưa cài pdf-autolink` (headless → `error` thông báo đó).
+- **pyproject:** đề mục 2 không tạo pyproject; test chỉ dùng thư viện chuẩn + pytest. Thứ tự merge: **1 trước, 2 sau** (2 cập nhật theo main rồi CI mới chạy test macOS) — `decisions.md` D8.
