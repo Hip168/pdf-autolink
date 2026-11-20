@@ -20,3 +20,7 @@ Còn lại theo `~/.claude/team/CONVENTIONS.md`.
 - **D5 Idempotent bằng so trùng Rect (IoU ≥ 0.9) + cùng trang đích**, không dùng dấu /NM: coi cả link có sẵn của file gốc là "đã có" (chấp nhận).
 - **D6 `A-501` ≠ `A501`**, không gộp biến thể mã (để sau nếu cần).
 - **D7 CI** ma trận ubuntu + macos, Python 3.11/3.12 (repo public → phút miễn phí); job macOS cần cho đề mục 2.
+- **D8** Thứ tự merge 1 → 2: nhánh 2 không có pyproject nên CI chỉ chạy test macOS sau khi cập nhật theo main có đề mục 1. Hợp đồng headless của app: `features/2-app-keo-tha.md` mục "Chốt thêm".
+- **D9** `pyproject.toml` có `[tool.pytest.ini_options] pythonpath = ["src", "."]`: trên macOS thư mục `.worktrees` (dấu chấm) làm file `.pth` của editable install bị cờ hidden và Python 3.12 bỏ qua → `uv run pytest` không import được gói.
+- **D10** Review đề mục 1 có 4 phát hiện (report đè input/output, lỗi I/O thành traceback + tự tạo thư mục ra, quyền file 0600, bộ nhớ theo trang) → điều phối tự quyết **sửa ngay** (Luật riêng 1); test bổ sung ở file test mới, không sửa test đã khoá.
+- **D11** `tests/test_cli.py`, `tests/test_report.py` (đã khoá) có import xếp sai thứ tự (ruff I001) vì được sắp khi module chưa tồn tại; không cấu hình isort nào thoả cả 2 file lẫn `test_review_fixes.py` → thêm `per-file-ignores` I001 cho đúng 2 file (chỉ là thứ tự import). Khi người dùng mở khoá lần sau: chạy `ruff check --fix` 2 file rồi bỏ dòng ignore. Kiểm lint ở máy dùng `--no-cache`.
