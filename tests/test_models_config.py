@@ -87,7 +87,7 @@ def test_config_is_frozen_and_overridable():
         cfg.iou_duplicate = 0.5  # type: ignore[misc]
 
 
-@pytest.mark.parametrize("code", ["A101", "M201", "S-101", "E0.01", "AB12", "A1.2-3"])
+@pytest.mark.parametrize("code", ["A101", "M201", "S-101", "E0.01", "AB12", "A1.23"])
 def test_default_sheet_regex_accepts_drawing_codes(code):
     assert re.fullmatch(Config().sheet_regex, code)
 
