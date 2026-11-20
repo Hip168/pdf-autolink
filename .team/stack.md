@@ -20,3 +20,6 @@ uv run pdf-autolink in.pdf     # chạy CLI → in_linked.pdf + in_linked.csv
 ```
 
 Không có giao diện web → **không bật soi trình duyệt** (§5c).
+
+## Bẫy môi trường macOS (BA, 2026-11-21)
+`uv sync` trong `.worktrees/...` có thể gắn cờ `hidden` lên `.venv` và file `.pth` của bản cài editable; Python 3.12 bỏ qua `.pth` bị ẩn → console script `pdf-autolink` báo `ModuleNotFoundError` (pytest vẫn chạy nhờ `pythonpath`, D9). Cách xử lý trên máy: `chflags -R nohidden .venv` sau mỗi lần `uv sync`, rồi chạy `uv run --no-sync pytest -q`. CI Linux không bị.
